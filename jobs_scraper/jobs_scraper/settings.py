@@ -6,10 +6,6 @@ BOT_NAME = 'jobs_scraper'
 SPIDER_MODULES = ['jobs_scraper.jobs_scraper.spiders']
 NEWSPIDER_MODULE = 'jobs_scraper.jobs_scraper.spiders'
 
-EXTENSIONS = {
-    'scrapy.extensions.closespider.CloseSpider': 500
-}
-
 ITEM_PIPELINES = {
     'jobs_scraper.jobs_scraper.pipelines.CsvExportPipeline': 300,
 }
@@ -17,8 +13,6 @@ ITEM_PIPELINES = {
 DOWNLOAD_HANDLERS = {
     's3': None
 }
-
-CLOSESPIDER_PAGECOUNT = 5
 
 CONCURRENT_REQUESTS = 1
 
