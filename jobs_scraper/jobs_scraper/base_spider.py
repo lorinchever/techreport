@@ -24,7 +24,7 @@ class BaseSpider(scrapy.spiders.CrawlSpider):
         self.csv_export_fullpath = os.path.abspath(os.path.join(
             u'data',
             os.path.basename(os.path.dirname(os.path.abspath(__file__))),
-            self.name, u'{}{}{}{}'.format(self.name, u'_', run_date, u'.csv')))
+            self.name, u'jobs_scraper_{}_{}.csv'.format(self.name, run_date)))
 
     def get_abs_url(self, url):
         return urlparse.urljoin(self.root_url, url)
