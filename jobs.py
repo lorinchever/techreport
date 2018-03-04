@@ -18,42 +18,62 @@ def main():
     # Set up logging
     logging.basicConfig(
         filename=os.path.abspath(os.path.join(
-            u'logs', u'{}{}{}'.format(u'jobs_', run_date, u'.log'))),
+            u'logs', u'jobs_{}.log'.format(run_date))),
         format='%(asctime)s [%(name)s] %(levelname)s: %(message)s',
         level=logging.DEBUG)
 
     # Run the scraper
     jobs_scraper.run_scraper.run(run_date)
 
-    # Load the scraped jobs and split their descriptions into lower-case words
+    # Load the scraped jobs
     try:
-        jobs = pandas.read_csv('data/jobs_scraper/indeed/jobs_scraper_indeed_{}.csv'.format(run_date), dtype=object, encoding='utf_8', error_bad_lines=False, usecols=[u'job_id', u'title', u'company', u'location', u'description'])
+        jobs = pandas.read_csv(
+            u'data/jobs_scraper/indeed/jobs_scraper_indeed_{}.csv'.format(
+                run_date),
+            usecols=[u'job_id', u'title', u'company', u'location',
+                     u'description'],
+            dtype=object, encoding='utf_8', error_bad_lines=False)
     except Exception, e:
         print type(e), e
         return
     jobs = jobs.dropna().drop_duplicates(subset=u'job_id')
-    jobs[u'description'] = jobs[u'description'].str.lower().apply(nltk.word_tokenize)
 
-    # Load the dictionary of keywords
+    # Load the dictionary of technologies
     try:
-        multi_keywords = pandas.read_csv('Dictionary/dictionary.csv', dtype=object, encoding='utf_8', error_bad_lines=False, squeeze=True, usecols=[u'Keyword'])
+        technologies = pandas.read_csv(
+            u'Dictionary/dictionary.csv', usecols=[u'technology', u'keyword'],
+            dtype=object, encoding='utf_8', error_bad_lines=False)
     except Exception, e:
         print type(e), e
         return
-    multi_keywords = multi_keywords.dropna().drop_duplicates()
 
-    # Find the jobs whose descriptions mention every keyword
-    matching_jobs = pandas.DataFrame(columns=[u'multi_keyword', u'job_id', u'title', u'company', u'location'])
-    for multi_keyword in multi_keywords:
-        keywords = multi_keyword.split(u',')
-        for row in jobs.itertuples(index=False):
-            if any(keyword in row.description for keyword in keywords):
-                matching_jobs = matching_jobs.append({u'multi_keyword': multi_keyword, u'job_id': row.job_id, u'title': row.title, u'company': row.company, u'location': row.location}, ignore_index=True)
-    matching_jobs = matching_jobs.sort_values([u'multi_keyword', u'job_id'])
+    # Find the technology keywords in every job description
+    keywords = set(technologies[u'keyword'])
+    jobs[u'description'] = jobs[u'description'].str.lower().apply(
+        nltk.word_tokenize).apply(set).apply(keywords.intersection)
 
-    # Save the matching jobs
+    # Create an entry for every technology keyword
+    keywords_to_jobs = pandas.DataFrame(
+        columns=[u'keyword', u'job_id', u'title', u'company', u'location'])
+    for row in jobs.itertuples(index=False):
+        for keyword in row.description:
+            keywords_to_jobs = keywords_to_jobs.append(
+                {u'keyword': keyword, u'job_id': row.job_id,
+                    u'title': row.title, u'company': row.company,
+                    u'location': row.location},
+                ignore_index=True)
+
+    # Match technologies to jobs and save it
+    technologies_to_jobs = pandas.merge(
+        technologies, keywords_to_jobs, on=u'keyword').drop(
+        u'keyword', axis=1).sort_values([u'technology', u'job_id'])
     try:
-        matching_jobs.to_csv('data/jobs_matching/indeed/jobs_matching_indeed_{}.csv'.format(run_date), encoding='utf_8', index=False)
+        technologies_to_jobs.to_csv(
+            u'data/jobs_matching/indeed/jobs_matching_indeed_{}.csv'.format(
+                run_date),
+            columns=[u'technology', u'job_id', u'title', u'company',
+                     u'location'],
+            index=False, encoding='utf_8')
     except Exception, e:
         print type(e), e
         return
