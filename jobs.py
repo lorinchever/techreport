@@ -46,6 +46,7 @@ def main():
     except Exception, e:
         print type(e), e
         return
+    technologies = technologies.dropna().drop_duplicates(subset=u'keyword')
 
     # Find the technology keywords in every job description
     keywords = set(technologies[u'keyword'])
@@ -66,7 +67,9 @@ def main():
     # Match technologies to jobs and save it
     technologies_to_jobs = pandas.merge(
         technologies, keywords_to_jobs, on=u'keyword').drop(
-        u'keyword', axis=1).sort_values([u'technology', u'job_id'])
+        u'keyword', axis=1).drop_duplicates(
+        subset=[u'technology', u'job_id']).sort_values(
+        [u'technology', u'job_id'])
     try:
         technologies_to_jobs.to_csv(
             u'data/jobs_matching/indeed/jobs_matching_indeed_{}.csv'.format(
