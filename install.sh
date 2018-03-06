@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for d in "logs" "data/jobs_scraper/indeed" "data/jobs_matching/indeed"; do
+for d in "logs" "data/scraping" "data/matching"; do
     if [[ ! -d "$d" ]]; then
         mkdir -p "$d"
     fi
