@@ -55,8 +55,9 @@ def main():
     # Load the dictionary of technologies
     try:
         technologies = pandas.read_csv(
-            u'dictionary/dictionary.csv', usecols=[u'Technology', u'Keywords'],
-            dtype=object, encoding='utf_8', error_bad_lines=False)
+            u'dictionaries/technologies.csv',
+            usecols=[u'Technology', u'Keywords'], dtype=object,
+            encoding='utf_8', error_bad_lines=False)
     except Exception, e:
         logging.error(u"{} {}".format(type(e), e))
         return
