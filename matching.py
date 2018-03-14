@@ -4,9 +4,17 @@
 import datetime
 import logging
 import os.path
+import re
 
-import nltk
 import pandas
+
+
+def is_sublist(sl, l):
+    sl_length = len(sl)
+    for i in xrange(len(l)):
+        if l[i:i + sl_length] == sl:
+            return True
+    return False
 
 
 def main():
@@ -39,43 +47,47 @@ def main():
     jobs = pandas.concat(jobs_daily_chunks).dropna().drop_duplicates(
         subset=u'job_id')
 
+    # Split the job descriptions into lower-case words
+    jobs[u'description'] = jobs[u'description'].str.lower().apply(
+        lambda x: [w.strip(u'.') for w in re.split(
+            ur'[^a-zA-Z0-9_#+\-.]+', x, flags=re.U)])
+
     # Load the dictionary of technologies
     try:
         technologies = pandas.read_csv(
-            u'dictionary/dictionary.csv', usecols=[u'technology', u'keyword'],
+            u'dictionary/dictionary.csv', usecols=[u'Technology', u'Keywords'],
             dtype=object, encoding='utf_8', error_bad_lines=False)
     except Exception, e:
         logging.error(u"{} {}".format(type(e), e))
         return
-    technologies = technologies.dropna().drop_duplicates(subset=u'keyword')
+    technologies = technologies.dropna().drop_duplicates(subset=u'Technology')
 
-    # Find the technology keywords in every job description
-    keywords = set(technologies[u'keyword'])
-    jobs[u'description'] = jobs[u'description'].str.lower().apply(
-        nltk.word_tokenize).apply(set).apply(keywords.intersection)
+    # Split the technology keywords into words
+    technologies[u'Keywords'] = technologies[u'Keywords'].str.split(u'|')
 
-    # Create an entry for every technology keyword
-    keywords_to_jobs = pandas.DataFrame(
-        columns=[u'keyword', u'job_id', u'title', u'company', u'location'])
-    for row in jobs.itertuples(index=False):
-        for keyword in row.description:
-            keywords_to_jobs = keywords_to_jobs.append(
-                {u'keyword': keyword, u'job_id': row.job_id,
-                    u'title': row.title, u'company': row.company,
-                    u'location': row.location},
-                ignore_index=True)
+    # Match the technologies to the jobs
+    technologies_to_jobs = pandas.DataFrame(
+        columns=[u'Technology', u'Job_ID', u'Title', u'Company', u'Location'])
+    for jobs_row in jobs.itertuples(index=False):
+        for technologies_row in technologies.itertuples(index=False):
+            if any(is_sublist(keyword.split(), jobs_row.description)
+                    for keyword in technologies_row.Keywords):
+                technologies_to_jobs = technologies_to_jobs.append(
+                    {u'Technology': technologies_row.Technology,
+                        u'Job_ID': jobs_row.job_id, u'Title': jobs_row.title,
+                        u'Company': jobs_row.company,
+                        u'Location': jobs_row.location},
+                    ignore_index=True)
+    technologies_to_jobs = technologies_to_jobs.drop_duplicates(
+        subset=[u'Technology', u'Job_ID']).sort_values(
+        [u'Technology', u'Job_ID'])
 
-    # Match technologies to jobs and save it
-    technologies_to_jobs = pandas.merge(
-        technologies, keywords_to_jobs, on=u'keyword').drop(
-        u'keyword', axis=1).drop_duplicates(
-        subset=[u'technology', u'job_id']).sort_values(
-        [u'technology', u'job_id'])
+    # Save the matching
     try:
         technologies_to_jobs.to_csv(
             u'data/matching/matching_{}.csv'.format(iso_run_date),
-            columns=[u'technology', u'job_id', u'title', u'company',
-                     u'location'],
+            columns=[u'Technology', u'Job_ID', u'Title', u'Company',
+                     u'Location'],
             index=False, encoding='utf_8')
     except Exception, e:
         logging.error(u"{} {}".format(type(e), e))
