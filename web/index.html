@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="EN">
+    <head>
+        <meta charset="UTF-8">
+        <title>Bar chart</title>
+        <link rel="stylesheet" type="text/css" href="dc.css" />
+        <style>
+            body {
+                font-family: sans-serif;
+            }
+            .dc-chart g.row text {fill: black;}
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript" src="crossfilter.js"></script>
+        <script type="text/javascript" src="d3.js"></script>
+        <script type="text/javascript" src="dc.js"></script>
+        <script type="text/javascript">
+            function print_filter(filter){
+                var f=eval(filter);
+                if (typeof(f.length) != "undefined") {}else{}
+                if (typeof(f.top) != "undefined") {f=f.top(Infinity);}else{}
+                if (typeof(f.dimension) != "undefined") {f=f.dimension(function(d) { return "";}).top(Infinity);}else{}
+                console.log(filter+"("+f.length+") = "+JSON.stringify(f).replace("[","[\n\t").replace(/}\,/g,"},\n\t").replace("]","\n]"));
+            }
+            
+            function remove_empty_bins(source_group) {
+                return {
+                    all:function () {
+                        return source_group.all().filter(function(d) {
+                            return d.value != 0;
+                        });
+                    }
+                };
+            }
+            
+            d3.csv("matching.csv", function(error, data) {
+                var ndx = crossfilter(data);
+                
+                var categoryDimension = ndx.dimension(dc.pluck("Category"));
+                var categoryGroup = categoryDimension.group();
+                
+                var technologyDimension = ndx.dimension(dc.pluck("Technology"));
+                var technologyGroup = remove_empty_bins(technologyDimension.group())
+                
+                var categories = dc.selectMenu("#categories")
+                    .dimension(categoryDimension)
+                    .group(categoryGroup)
+                    .promptText("All categories");
+                
+                var technologyRowChart = dc.rowChart("#rowchart")
+                    .dimension(technologyDimension)
+                    .group(technologyGroup)
+                    .width(1200)
+                    .height(600)
+                    .x(d3.scale.linear())
+                    .elasticX(true)
+                    .ordering(function(d) { return -d.value })
+                    .rowsCap(10);
+                
+                dc.renderAll();
+            });
+        </script>
+        <h1>Techreport</h1>
+        <h2>Number of job listings mentioning each technology</h2>
+        <div id="categories"></div>
+        <div id="rowchart"></div>
+    </body>
+</html>

@@ -56,7 +56,7 @@ def main():
     try:
         technologies = pandas.read_csv(
             u'dictionaries/technologies.csv',
-            usecols=[u'Technology', u'Keywords'], dtype=object,
+            usecols=[u'Technology', u'Keywords', u'Category'], dtype=object,
             encoding='utf_8', error_bad_lines=False)
     except Exception, e:
         logging.error(u"{} {}".format(type(e), e))
@@ -68,7 +68,8 @@ def main():
 
     # Match the technologies to the jobs
     technologies_to_jobs = pandas.DataFrame(
-        columns=[u'Technology', u'Job_ID', u'Title', u'Company', u'Location'])
+        columns=[u'Technology', u'Job_ID', u'Title', u'Company', u'Location',
+                 u'Category'])
     for jobs_row in jobs.itertuples(index=False):
         for technologies_row in technologies.itertuples(index=False):
             if any(is_sublist(keyword.split(), jobs_row.description)
@@ -77,7 +78,8 @@ def main():
                     {u'Technology': technologies_row.Technology,
                         u'Job_ID': jobs_row.job_id, u'Title': jobs_row.title,
                         u'Company': jobs_row.company,
-                        u'Location': jobs_row.location},
+                        u'Location': jobs_row.location,
+                        u'Category': technologies_row.Category},
                     ignore_index=True)
     technologies_to_jobs = technologies_to_jobs.drop_duplicates(
         subset=[u'Technology', u'Job_ID']).sort_values(
@@ -88,7 +90,7 @@ def main():
         technologies_to_jobs.to_csv(
             u'data/matching/matching_{}.csv'.format(iso_run_date),
             columns=[u'Technology', u'Job_ID', u'Title', u'Company',
-                     u'Location'],
+                     u'Location', u'Category'],
             index=False, encoding='utf_8')
     except Exception, e:
         logging.error(u"{} {}".format(type(e), e))
