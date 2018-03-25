@@ -1,4 +1,6 @@
 logs/
 data/
+web/data/
+web/external/
 *.pyc
 .DS_Store

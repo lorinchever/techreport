@@ -3,22 +3,14 @@
     <head>
         <meta http-equiv="Content-type" content="text/html" charset="UTF-8" />
         <title>Techreport — The latest technology trends in jobs</title>
-        <link rel="stylesheet" type="text/css" href="dc.css" />
+        <link rel="stylesheet" type="text/css" href="external/dc.css" />
         <link rel="stylesheet" type="text/css" href="techreport.css" />
     </head>
     <body>
-        <script type="text/javascript" src="crossfilter.js"></script>
-        <script type="text/javascript" src="d3.js"></script>
-        <script type="text/javascript" src="dc.js"></script>
+        <script type="text/javascript" src="external/crossfilter.js"></script>
+        <script type="text/javascript" src="external/d3.js"></script>
+        <script type="text/javascript" src="external/dc.js"></script>
         <script type="text/javascript">
-            function print_filter(filter){
-                var f=eval(filter);
-                if (typeof(f.length) != "undefined") {}else{}
-                if (typeof(f.top) != "undefined") {f=f.top(Infinity);}else{}
-                if (typeof(f.dimension) != "undefined") {f=f.dimension(function(d) { return "";}).top(Infinity);}else{}
-                console.log(filter+"("+f.length+") = "+JSON.stringify(f).replace("[","[\n\t").replace(/}\,/g,"},\n\t").replace("]","\n]"));
-            }
-            
             function remove_empty_bins(source_group) {
                 return {
                     all:function () {
@@ -29,7 +21,7 @@
                 };
             }
             
-            d3.csv("matching.csv", function(error, data) {
+            d3.csv("data/matching.csv", function(error, data) {
                 var ndx = crossfilter(data);
                 
                 var categoryDimension = ndx.dimension(dc.pluck("Category"));
