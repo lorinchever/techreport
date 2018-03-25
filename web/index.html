@@ -1,15 +1,10 @@
 <!DOCTYPE html>
-<html lang="EN">
+<html lang="en-US">
     <head>
-        <meta charset="UTF-8">
-        <title>Bar chart</title>
+        <meta http-equiv="Content-type" content="text/html" charset="UTF-8" />
+        <title>Techreport</title>
         <link rel="stylesheet" type="text/css" href="dc.css" />
-        <style>
-            body {
-                font-family: sans-serif;
-            }
-            .dc-chart g.row text {fill: black;}
-        </style>
+        <link rel="stylesheet" type="text/css" href="techreport.css" />
     </head>
     <body>
         <script type="text/javascript" src="crossfilter.js"></script>
@@ -43,27 +38,51 @@
                 var technologyDimension = ndx.dimension(dc.pluck("Technology"));
                 var technologyGroup = remove_empty_bins(technologyDimension.group())
                 
-                var categories = dc.selectMenu("#categories")
+                var companyDimension = ndx.dimension(dc.pluck("Company"));
+                var companyGroup = companyDimension.group();
+                
+                var categoriesMenu = dc.selectMenu("#categoriesmenu")
                     .dimension(categoryDimension)
                     .group(categoryGroup)
                     .promptText("All categories");
                 
-                var technologyRowChart = dc.rowChart("#rowchart")
+                var technologyRowChart = dc.rowChart("#technologyrowchart")
                     .dimension(technologyDimension)
                     .group(technologyGroup)
-                    .width(1200)
-                    .height(600)
+                    .width(800)
+                    .height(400)
                     .x(d3.scale.linear())
                     .elasticX(true)
                     .ordering(function(d) { return -d.value })
                     .rowsCap(10);
                 
+                var companyPieChart = dc.pieChart("#companypiechart")
+                    .dimension(companyDimension)
+                    .group(companyGroup)
+                    .width(400)
+                    .height(400)
+                    .radius(100)
+                    .innerRadius(40)
+                    .externalLabels(50)
+                    .minAngleForLabel(0)
+                    .drawPaths(true)
+                    .slicesCap(10);
+                
                 dc.renderAll();
             });
         </script>
-        <h1>Techreport</h1>
-        <h2>Number of job listings mentioning each technology</h2>
-        <div id="categories"></div>
-        <div id="rowchart"></div>
+        <div class="columntext">
+            <h1>Techreport</h1>
+            <p>Techreport presents the latest trends in technologies required by the IT industry. Source data is extracted from job boards on a daily basis.</p>
+        </div>
+        <div id="categoriesmenu">
+            <p class="charttitle"><strong>Categories of technologies</strong></p>
+        </div>
+        <div id="technologyrowchart">
+            <p class="charttitle"><strong>Top 10 technologies</strong></strong></p>
+        </div>
+        <div id="companypiechart">
+            <p class="charttitle"><strong>Top 10 companies</strong></p>
+        </div>
     </body>
 </html>

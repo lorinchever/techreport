@@ -1,0 +1,20 @@
+body {
+    font-family: sans-serif;
+}
+
+.columntext {
+    width: 800px;
+    margin: auto;
+}
+
+h1, .charttitle {
+    text-align: center;
+}
+
+.dc-chart g.row text {
+    fill: #000000;
+}
+
+.dc-chart text.pie-slice {
+    fill: #000000;
+}
