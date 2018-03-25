@@ -7,7 +7,7 @@ body {
     margin: auto;
 }
 
-h1, .charttitle {
+h1, h2, .charttitle {
     text-align: center;
 }
 
