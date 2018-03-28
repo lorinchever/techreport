@@ -4,6 +4,7 @@
         <meta http-equiv="Content-type" content="text/html" charset="UTF-8" />
         <title>Techreport — The latest technology trends in jobs</title>
         <link rel="stylesheet" type="text/css" href="external/dc.css" />
+        <!--link rel="stylesheet" type="text/css" href="external/bootstrap.css" /-->
         <link rel="stylesheet" type="text/css" href="techreport.css" />
     </head>
     <body>
@@ -20,24 +21,37 @@
                     }
                 };
             }
-            
+
             d3.csv("data/matching.csv", function(error, data) {
                 var ndx = crossfilter(data);
-                
+                var all = ndx.groupAll();
+
                 var categoryDimension = ndx.dimension(dc.pluck("Category"));
                 var categoryGroup = categoryDimension.group();
-                
+
                 var technologyDimension = ndx.dimension(dc.pluck("Technology"));
                 var technologyGroup = remove_empty_bins(technologyDimension.group())
-                
+
                 var companyDimension = ndx.dimension(dc.pluck("Company"));
                 var companyGroup = companyDimension.group();
-                
+
+                var jobIDDimension = ndx.dimension(dc.pluck("Job_ID"));
+
+  //              var jobIDDimension = ndx.dimension(function(d){ return d.Job_ID; });
+  //               var jobIDGroup = jobIDDimension.group();
+
+                 function print_filter(filter) {
+                   var f=eval(filter);
+                   if (typeof(f.length) != "undefined") {}else{}
+                   if (typeof(f.top) != "undefined") {f=f.top(Infinity);}else{}
+                   if (typeof(f.dimension) != "undefined") {f=f.dimension(function(d) { return "";}).top(Infinity);}else{}
+                   console.log(filter+"("+f.length+") = "+JSON.stringify(f).replace("[","[\n\t").replace(/}\,/g,"},\n\t").replace("]","\n]"));
+                 }
                 var categoriesMenu = dc.selectMenu("#categoriesmenu")
                     .dimension(categoryDimension)
                     .group(categoryGroup)
                     .promptText("All categories");
-                
+
                 var technologyRowChart = dc.rowChart("#technologyrowchart")
                     .dimension(technologyDimension)
                     .group(technologyGroup)
@@ -47,7 +61,7 @@
                     .elasticX(true)
                     .ordering(function(d) { return -d.value })
                     .rowsCap(10);
-                
+
                 var companyPieChart = dc.pieChart("#companypiechart")
                     .dimension(companyDimension)
                     .group(companyGroup)
@@ -59,7 +73,73 @@
                     .minAngleForLabel(0)
                     .drawPaths(true)
                     .slicesCap(10);
-                
+
+                var jobMatchCount = dc.dataCount('.dc-data-count')
+                    .dimension(ndx)
+                    .group(all)
+                    .html({
+                      some: '<strong>%filter-count</strong> selected out of <strong>%total-count</strong> records' +
+                            ' | <a href=\'javascript:dc.filterAll(); dc.renderAll();\'>Reset All</a>',
+                      all: 'All records selected. Please click on the graph to apply filters.'
+                    });
+
+
+                var fakeDim = { top: function(num) {
+                        var seen = [];
+                        return jobIDDimension.top(num).filter(function(d) {
+                            var key = d.Job_ID;
+//                            console.log(key);
+                            if(seen.indexOf(key) !== -1) {
+                                return false;
+                            } else {
+                                seen.push(key);
+                                return true;
+                            }
+                        })
+                    },
+                    bottom: function(num) {
+                        var seen = [];
+                        return jobIDDimension.bottom(num).filter(function(d) {
+                            var key = d.Job_ID;
+//                            console.log(key);
+                            if(seen.indexOf(key) !== -1) {
+                                return false;
+                            } else {
+                                seen.push(key);
+                                return true;
+                            }
+                        })
+                    }
+                }
+
+                var jobMatchTable = dc.dataTable('.dc-data-table')
+                //  .dimension(jobIDDimension)
+                  .dimension(fakeDim)
+                  .group(function (d) {
+                            return "Jobs";
+                        })
+                  .size(25)
+                  .showGroups(false)
+                  .columns([
+                          {
+                            label: 'Link',
+                            format: function (d) {
+
+                              return '<a href="https://www.indeed.com/jobs?q=software%20engineer&l=Seattle,%20WA&vjk=' + d.Job_ID + '">' + d.Job_ID + '</a>';
+                            }
+                          },
+                          'Company',
+                          'Title',
+                          'Location'
+                        ])
+                  .sortBy(function (d) {
+                      return d.Company;
+                  })
+                  .order(d3.ascending);
+                  // .on('renderlet', function (table) {
+                  //    table.selectAll('.dc-table-group').classed('info', true);
+                  //  });
+
                 dc.renderAll();
             });
         </script>
@@ -68,6 +148,7 @@
             <h2>The latest technology trends in jobs</h2>
             <p>Techreport tackles one question: Which technologies are mostly demanded by hiring companies today? The answer comes in the form of a series of charts you can interact with.</p>
         </div>
+        <div class="row">
         <div id="categoriesmenu">
             <p class="charttitle"><strong>Categories of technologies</strong></p>
         </div>
@@ -77,5 +158,17 @@
         <div id="companypiechart">
             <p class="charttitle"><strong>Top 10 companies</strong></p>
         </div>
+      </div>
+
+        <div class="row">
+        <div class='dc-data-count'>
+         <span class='filter-count'></span>
+         selected out of <span class='total-count'></span> records.
+        </div>
+        <!-- anchor div for data table -->
+        <table class="table table-hover dc-data-table">
+        </table>
+
+      </div>
     </body>
 </html>
