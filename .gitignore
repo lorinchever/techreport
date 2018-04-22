@@ -1,5 +1,6 @@
 logs/
 data/
+scraping/scraping/settings-dev.py
 web/data/
 web/external/
 *.pyc
