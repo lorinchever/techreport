@@ -1,4 +1,4 @@
-# Techreport — The latest technology trends in jobs
+# Techreport: The latest technology trends in the job market
 
 Techreport tackles one question: Which technologies are mostly demanded by hiring companies today? The answer comes in the form of a series of charts you can interact with.
 
